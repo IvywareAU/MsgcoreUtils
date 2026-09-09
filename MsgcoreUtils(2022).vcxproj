@@ -407,6 +407,8 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
     <ClCompile Include="MsgValue.cpp" />
     <ClCompile Include="PrintJson.cpp" />
     <ClCompile Include="PrintPHP.cpp" />
+    <ClCompile Include="PrintXML.cpp" />
+    <ClCompile Include="PrintHTML.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -417,6 +419,8 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
     <ClInclude Include="MsgValue.h" />
     <ClInclude Include="PrintJson.h" />
     <ClInclude Include="PrintPHP.h" />
+    <ClInclude Include="PrintXML.h" />
+    <ClInclude Include="PrintHTML.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>

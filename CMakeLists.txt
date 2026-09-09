@@ -60,7 +60,9 @@ set(MSGCOREUTILS_SOURCES
     MsgPrint.cpp
     MsgValue.cpp
     PrintJson.cpp
-    PrintPHP.cpp)
+    PrintPHP.cpp
+    PrintXML.cpp
+    PrintHTML.cpp)
 
 if(WIN32)
     # Same MFC shape as msgcore: a shared-runtime MFC extension DLL, Unicode. The flag is

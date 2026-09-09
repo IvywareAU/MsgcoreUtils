@@ -71,6 +71,8 @@
 //  class the compiler has not seen. Include the renderer you want:
 //
 //      #include "MsgcoreUtils/PrintJson.h"
+//      #include "MsgcoreUtils/PrintXML.h"
 //      #include "MsgcoreUtils/PrintPHP.h"
+//      #include "MsgcoreUtils/PrintHTML.h"
 //
 //  Each is self-contained and each brings MsgPrint with it.
