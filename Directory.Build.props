@@ -1,0 +1,26 @@
+<Project>
+  <!--
+    MsgcoreUtils sits BESIDE the Msgcore checkout rather than inside it, and MSBuild
+    imports only the NEAREST Directory.Build.props walking up from the project. Without
+    this file that walk leaves this directory, finds nothing above _ClaudeCode\, and
+    $(WDMSCS_LIB) is EMPTY here - at which point <ImportLibrary> becomes
+    '\MsgcoreUtils.lib' and link.exe writes the import library and its .exp to the ROOT
+    OF THE CURRENT DRIVE, silently, with the build still green. Msgcore's own
+    Directory.Build.props records that exact failure; moving this project out of that
+    tree re-opened it, so the fix moves with the project.
+
+    Importing the library's file rather than restating it keeps ONE definition of
+    WDMSCS_LIB. $(MSBuildThisFileDirectory) inside the imported file resolves to the
+    Msgcore checkout, so the staging directory stays Msgcore\lib\<Platform>\<Configuration>
+    - which is where Msgcore.lib, the import library this project actually links, is
+    written. Restating the default here would point it at MsgcoreUtils\lib instead, and
+    the link would fail looking for a Msgcore.lib nothing ever puts there.
+  -->
+
+  <PropertyGroup>
+    <MsgcoreRepoDir>$(MSBuildThisFileDirectory)..\Msgcore\</MsgcoreRepoDir>
+  </PropertyGroup>
+
+  <Import Project="$(MsgcoreRepoDir)Directory.Build.props"
+          Condition="Exists('$(MsgcoreRepoDir)Directory.Build.props')" />
+</Project>

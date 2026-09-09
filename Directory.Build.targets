@@ -1,0 +1,25 @@
+<Project>
+  <!--
+    Companion to Directory.Build.props - same reason, same sibling path. Importing
+    Msgcore's targets file is what carries its MsgcoreValidateWDMSCSLib guard over to
+    this project; that guard is keyed off $(MsgcoreStandalone), which the .props sets.
+
+    The target below covers the case the imports cannot: a MsgcoreUtils checked out
+    WITHOUT Msgcore beside it. Both Import conditions then fail silently - that is what
+    Condition on an Import does - and the build would proceed with no WDMSCS_LIB and no
+    guard, which is precisely the drive-root write the .props describes. Fail instead,
+    before the compiler has run, and say where the missing directory is expected.
+  -->
+
+  <PropertyGroup>
+    <MsgcoreRepoDir>$(MSBuildThisFileDirectory)..\Msgcore\</MsgcoreRepoDir>
+  </PropertyGroup>
+
+  <Import Project="$(MsgcoreRepoDir)Directory.Build.targets"
+          Condition="Exists('$(MsgcoreRepoDir)Directory.Build.targets')" />
+
+  <Target Name="MsgcoreUtilsRequireSiblingMsgcore" BeforeTargets="ClCompile;ResourceCompile;Link;Lib">
+    <Error Condition="!Exists('$(MsgcoreRepoDir)Directory.Build.props')"
+           Text="The Msgcore checkout was not found at '$(MsgcoreRepoDir)'. MsgcoreUtils builds against it as a SIBLING directory: every source here includes ..\Msgcore\stdafx.h and the DLL configurations link Msgcore.lib out of $(WDMSCS_LIB), which Msgcore's Directory.Build.props defines. Clone Msgcore beside this directory, or set WDMSCS_LIB to an absolute staging directory and supply the headers yourself." />
+  </Target>
+</Project>

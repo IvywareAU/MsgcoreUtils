@@ -1,0 +1,71 @@
+//  MsgcoreUtils.rc - version resource for MsgcoreUtils.dll
+//
+//  WHY THIS FILE EXISTS: a DLL built without a .rc has no .rsrc section at
+//  all, so Explorer and any installer that reads it report EMPTY company,
+//  product and copyright. Msgcore.dll carries the block; a companion DLL
+//  shipping beside it without one looks, to everything that inspects
+//  binaries, like it came from nobody.
+//
+//  Every number and fixed string is Msgcore_version.h's, reached as
+//  ..\Msgcore\Msgcore_version.h because rc.exe resolves a quoted include
+//  relative to the .rc first - this project sits BESIDE the Msgcore checkout
+//  rather than inside it. Nothing here is a literal that could drift: the block
+//  is compiled from the very header the Msgcore.dll next to it was built from,
+//  and a MsgcoreUtils.dll reporting a version that Msgcore.dll does not would
+//  describe a pairing that cannot occur.
+//
+//  There is no resource.h and no STRINGTABLE, unlike Msgcore.rc. This module
+//  owns no strings, and an ID space nothing allocates from is one more thing
+//  that can collide with the host application an extension DLL is linked into.
+//
+#include "afxres.h"
+#include "../Msgcore/Msgcore_version.h"
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE 9, 1
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+// FILETYPE is VFT_DLL because the resource only reaches a shipped module in
+// the DLL configurations - the Lib configurations archive it and no consumer
+// ever queries it. Same call Msgcore.rc makes, for the same reason.
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION    MSGCORE_VERSION_COMMAS
+ PRODUCTVERSION MSGCORE_VERSION_COMMAS
+ FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+ FILEFLAGS      VS_FF_DEBUG
+#else
+ FILEFLAGS      0x0L
+#endif
+ FILEOS         VOS_NT_WINDOWS32
+ FILETYPE       VFT_DLL
+ FILESUBTYPE    VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName",      MSGCORE_COMPANY_NAME
+            VALUE "FileDescription",  "MsgcoreUtils - JSON and PHP projection of a Msgcore store"
+            VALUE "FileVersion",      MSGCORE_VERSION_STRING
+            VALUE "InternalName",     "MsgcoreUtils"
+            VALUE "LegalCopyright",   MSGCORE_COPYRIGHT
+            VALUE "OriginalFilename", "MsgcoreUtils.dll"
+            VALUE "ProductName",      MSGCORE_PRODUCT_NAME
+            VALUE "ProductVersion",   MSGCORE_VERSION_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif
+/////////////////////////////////////////////////////////////////////////////

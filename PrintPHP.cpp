@@ -1,0 +1,667 @@
+// Copyright © 2026 Ivyware Pty Ltd, Khrustal & Mann
+//              MELBOURNE, VICTORIA, AUSTRALIA, 3000
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+// implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
+//  PrintPHP - PHP class declarations from a P3PmsgItem tree. See PrintPHP.h
+//  for the mapping and for the constraints PHP source puts on it.
+//
+//  LAYOUT: this dialect is always line-oriented, unlike the JSON one. The
+//  indent controls the WIDTH of a level and nothing else - a PHP file rendered
+//  onto one line would put its own banner comment in front of the code it is
+//  describing, because // runs to the end of a line and here there would not
+//  be one.
+//
+#include "stdafx.h"
+
+#include "PrintPHP.h"
+
+#include "../Msgcore/Msgexception.h"
+
+//  PSR-12 is four, and this is source rather than payload.
+#define PRINTPHP_INDENT_DEFAULT 4
+
+///////////////////////////////////////////////////////////////////////
+//  File-local helpers
+
+//
+//  PHP reserved words, which a CLASS may not be named after. Property names are
+//  unaffected - $list and $class are legal - so this is applied to class names
+//  only, and a match is prefixed rather than rejected.
+//  NOTES: The list is PHP's reserved words and its predefined class-like
+//         keywords together. It is checked case-INSENSITIVELY because PHP
+//         class names are.
+//
+static LPCTSTR const g_lpszPHPReserved[] =
+{
+    _T("abstract"),   _T("and"),        _T("array"),      _T("as"),
+    _T("break"),      _T("callable"),   _T("case"),       _T("catch"),
+    _T("class"),      _T("clone"),      _T("const"),      _T("continue"),
+    _T("declare"),    _T("default"),    _T("do"),         _T("echo"),
+    _T("else"),       _T("elseif"),     _T("empty"),      _T("enddeclare"),
+    _T("endfor"),     _T("endforeach"), _T("endif"),      _T("endswitch"),
+    _T("endwhile"),   _T("enum"),       _T("extends"),    _T("final"),
+    _T("finally"),    _T("fn"),         _T("for"),        _T("foreach"),
+    _T("function"),   _T("global"),     _T("goto"),       _T("if"),
+    _T("implements"), _T("include"),    _T("instanceof"), _T("insteadof"),
+    _T("interface"),  _T("isset"),      _T("list"),       _T("match"),
+    _T("namespace"),  _T("new"),        _T("or"),         _T("print"),
+    _T("private"),    _T("protected"),  _T("public"),     _T("readonly"),
+    _T("require"),    _T("return"),     _T("static"),     _T("switch"),
+    _T("throw"),      _T("trait"),      _T("try"),        _T("unset"),
+    _T("use"),        _T("var"),        _T("while"),      _T("xor"),
+    _T("yield"),      _T("bool"),       _T("false"),      _T("float"),
+    _T("int"),        _T("iterable"),   _T("mixed"),      _T("never"),
+    _T("null"),       _T("object"),     _T("parent"),     _T("self"),
+    _T("string"),     _T("true"),       _T("void"),
+};
+
+static bool
+PrintPHP_IsReserved ( const CString& strName )
+{
+    for ( size_t i = 0; i < sizeof(g_lpszPHPReserved)/sizeof(g_lpszPHPReserved[0]); i++ )
+      if ( strName.CompareNoCase ( g_lpszPHPReserved[i] ) == 0 )
+        return true;
+    return false;
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Constructors and destructor
+
+PrintPHP::PrintPHP ( ) noexcept
+{
+    m_nIndent = PRINTPHP_INDENT_DEFAULT;
+}
+
+PrintPHP::PrintPHP ( const PrintPHP& rhs )
+       : MsgPrint ( rhs )
+{
+    m_strClassName = rhs.m_strClassName;
+    m_bPreamble    = rhs.m_bPreamble;
+}
+
+PrintPHP::~PrintPHP ( )
+{
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Operators
+
+PrintPHP&
+PrintPHP::operator = ( const PrintPHP& rhs )
+{
+    if ( this == &rhs )
+      return *this;
+    MsgPrint::operator = ( rhs );
+    m_strClassName = rhs.m_strClassName;
+    m_bPreamble    = rhs.m_bPreamble;
+    return *this;
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Rendering
+
+//
+//  Renders oItem and everything beneath it as PHP class declarations,
+//  REPLACING whatever this renderer held.
+//
+//  Parameters:  P3PmsgItem& oItem
+//               Manager, item, list or vector to render
+//
+//  Returns:     MsgPrint&
+//               This renderer, so the text can be read from the expression
+//
+MsgPrint&
+PrintPHP::Render ( P3PmsgItem& oItem )
+{
+    m_strText.Empty ( );
+    m_oClassNames.clear ( );
+    try
+    {
+      if ( m_bPreamble )
+      {
+        CString strBanner;
+        strBanner.Format ( _T("<?php\n")
+                           _T("//  Generated by MsgcoreUtils PrintPHP - do not edit.\n")
+                           _T("//  Source: Msgcore item '%s'  (Msgcore %hs)\n\n")
+                         , oItem.c_name ( )
+                         , MSGCORE_VERSION_STRING );
+        Append ( (LPCTSTR)strBanner );
+      }
+
+      CString strRoot = Sanitise ( m_strClassName.IsEmpty ( )
+                                     ? oItem.c_name ( )
+                                     : (LPCTSTR)m_strClassName
+                                 , _T("Msgcore") );
+      if ( PrintPHP_IsReserved ( strRoot ) )
+        strRoot = _T("_") + strRoot;
+      strRoot = Unique ( strRoot, m_oClassNames );
+
+      RenderClass ( oItem, strRoot, 0 );
+      return *this;
+    }
+    //  Half a class declaration is a parse error wherever it is included, and
+    //  one that names a line the reader did not write. Empty the buffer so
+    //  IsEmpty() is the answer to "did this work".
+    catch_pP2Pevent_Cancel
+    catch_ALL_Cancel
+    m_strText.Empty ( );
+    return *this;
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Properties
+
+LPCTSTR
+PrintPHP::SetClassName ( LPCTSTR lpszClassName )
+{
+    m_strClassName = lpszClassName ? lpszClassName : _T("");
+    return (LPCTSTR)m_strClassName;
+}
+
+LPCTSTR
+PrintPHP::GetClassName ( ) const noexcept
+{
+    return (LPCTSTR)m_strClassName;
+}
+
+bool
+PrintPHP::SetPreamble ( bool bPreamble ) noexcept
+{
+    const bool bPrevious = m_bPreamble;
+    m_bPreamble = bPreamble;
+    return bPrevious;
+}
+
+bool
+PrintPHP::GetPreamble ( ) const noexcept
+{
+    return m_bPreamble;
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Implementation
+
+//
+//  Appends the class declarations for oItem: every descendant that needs a
+//  class of its own FIRST, then oItem itself.
+//
+//  Parameters:  P3PmsgItem& oItem
+//               Node the class describes
+//
+//               const CString& strClass
+//               Its class name, already sanitised and already unique
+//
+//               int nDepth
+//               Recursion depth, against MsgPrint's ceiling
+//
+void
+PrintPHP::RenderClass ( P3PmsgItem& oItem, const CString& strClass, int nDepth )
+{
+    if ( nDepth > m_nDepthMax )
+      return;
+
+    const CString strPad1 = Pad ( 1 );
+    const CString strPad2 = Pad ( 2 );
+
+    CString strProps, strCtor;
+    //  Property names taken by THIS class. Seeded with the three synthetic
+    //  ones as they are emitted, so a descendant that sanitises to _value gets
+    //  the suffix rather than silently overwriting the node's own data.
+    std::vector<CString> oMembers;
+
+    const bool bList = oItem.r_Object().IsList ( );
+    const bool bVect = oItem.r_Object().IsVect ( );
+    const bool bAttr = m_bAttributes && !oItem.r_Attr().IsEmpty ( );
+
+    //  $_value - the node's own data, when it has any.
+    CString strScalar;
+    if ( RenderScalar ( oItem.r_data(), strScalar ) != Value_Null )
+    {
+      const CString strMember = Unique ( _T("_value"), oMembers );
+      strProps += strPad1;
+      strProps += _T("/** @var mixed  ");
+      strProps += TypeName ( oItem.r_data() );
+      strProps += _T("  (the node's own value) */\n");
+      strProps += strPad1;
+      strProps += _T("public $") + strMember + _T(" = ")
+                + ScalarValue ( oItem.r_data() ) + _T(";\n");
+    }
+
+    //  $_items - the elements of a list or a vector.
+    if ( bList || bVect )
+    {
+      const CString strMember = Unique ( _T("_items"), oMembers );
+      strProps += strPad1;
+      strProps += bList ? _T("/** @var array  (Msgcore list elements) */\n")
+                        : _T("/** @var array  (Msgcore vector elements) */\n");
+      strProps += strPad1;
+      strProps += _T("public $") + strMember + _T(" = ")
+                + ( bList ? ListValue ( dynamic_cast<P3PmsgList&>(oItem), 1 )
+                          : VectValue ( dynamic_cast<P3PmsgVect&>(oItem), 1 ) )
+                + _T(";\n");
+    }
+
+    //  $_attributes - the attribute set, as an associative array.
+    if ( bAttr )
+    {
+      const CString strMember = Unique ( _T("_attributes"), oMembers );
+      strProps += strPad1;
+      strProps += _T("/** @var array  (Msgcore attributes) */\n");
+      strProps += strPad1;
+      strProps += _T("public $") + strMember + _T(" = ")
+                + AttrValue ( oItem.r_Attr(), 1 ) + _T(";\n");
+    }
+
+    //  One property per descendant. A descendant that has descendants of its
+    //  own becomes a class, declared here and instantiated in __construct;
+    //  everything else becomes a constant initialiser.
+    P3PmsgDesc& oDesc = oItem.r_Desc ( );
+    if ( !oDesc.IsEmpty() )
+    {
+      P3PmsgCurs& oCurs = oDesc.r_Curs ( );
+      for ( int i = 0; oCurs.Goto ( i ); i++ )
+      {
+        P3PmsgItem&   oChild   = oCurs.r_item ( );
+        const CString strName  = oChild.c_name ( );
+        const CString strIdent = Sanitise ( (LPCTSTR)strName, _T("item") );
+        const CString strProp  = Unique ( strIdent, oMembers );
+
+        if ( !oChild.r_Desc().IsEmpty() )
+        {
+          CString strChildClass = strClass + _T("_") + strIdent;
+          if ( PrintPHP_IsReserved ( strChildClass ) )
+            strChildClass = _T("_") + strChildClass;
+          strChildClass = Unique ( strChildClass, m_oClassNames );
+
+          //  Before this class, not after: PHP hoists an unconditional class
+          //  declaration so the order is not required, but a generated file is
+          //  also pasted into larger ones where hoisting no longer applies.
+          RenderClass ( oChild, strChildClass, nDepth + 1 );
+
+          strProps += strPad1;
+          strProps += _T("/** @var ") + strChildClass
+                    + _T("  (Msgcore '") + strName + _T("') */\n");
+          strProps += strPad1;
+          strProps += _T("public $") + strProp + _T(";\n");
+
+          strCtor  += strPad2;
+          strCtor  += _T("$this->") + strProp + _T(" = new ")
+                    + strChildClass + _T("();\n");
+        }
+        else
+        {
+          //  @var array whenever NodeValue is going to produce an array
+          //  literal - a list, a vector, or the associative form a node with
+          //  attributes takes. Saying "mixed" there and then emitting an array
+          //  would make the docblock the least accurate line in the file, and
+          //  a docblock nobody can trust is worse than none.
+          const bool  bArray = oChild.r_Object().IsList ( )
+                            || oChild.r_Object().IsVect ( )
+                            || ( m_bAttributes && !oChild.r_Attr().IsEmpty() );
+          strProps += strPad1;
+          strProps += _T("/** @var ");
+          strProps += bArray ? CString ( _T("array") )
+                             : CString ( _T("mixed  ") ) + TypeName ( oChild.r_data() );
+          strProps += _T("  (Msgcore '") + strName + _T("') */\n");
+          strProps += strPad1;
+          strProps += _T("public $") + strProp + _T(" = ")
+                    + NodeValue ( oChild, 1 ) + _T(";\n");
+        }
+      }
+    }
+
+    //  The declaration itself.
+    Append ( _T("class ") );
+    Append ( (LPCTSTR)strClass );
+    Append ( _T("\n{\n") );
+    if ( strProps.IsEmpty() && strCtor.IsEmpty() )
+    {
+      Append ( (LPCTSTR)strPad1 );
+      Append ( _T("//  The Msgcore node carries no value, attributes or descendants.\n") );
+    }
+    Append ( (LPCTSTR)strProps );
+    if ( !strCtor.IsEmpty() )
+    {
+      Append ( _T("\n") );
+      Append ( (LPCTSTR)strPad1 );
+      Append ( _T("public function __construct ( )\n") );
+      Append ( (LPCTSTR)strPad1 );
+      Append ( _T("{\n") );
+      Append ( (LPCTSTR)strCtor );
+      Append ( (LPCTSTR)strPad1 );
+      Append ( _T("}\n") );
+    }
+    Append ( _T("}\n\n") );
+}
+
+//
+//  One node as a PHP VALUE expression. Follows the same shape PrintJson uses -
+//  scalar, array, or the associative-array form when the node carries more than
+//  a value - so the two dialects describe the same store the same way.
+//
+CString
+PrintPHP::NodeValue ( P3PmsgItem& oItem, int nDepth ) const
+{
+    if ( nDepth > m_nDepthMax )
+      return _T("null");
+
+    const bool bList = oItem.r_Object().IsList ( );
+    const bool bVect = oItem.r_Object().IsVect ( );
+    const bool bDesc = !oItem.r_Desc().IsEmpty ( );
+    const bool bAttr = m_bAttributes && !oItem.r_Attr().IsEmpty ( );
+
+    if ( !bDesc && !bAttr )
+    {
+      if ( bList )
+        return ListValue ( dynamic_cast<P3PmsgList&>(oItem), nDepth );
+      if ( bVect )
+        return VectValue ( dynamic_cast<P3PmsgVect&>(oItem), nDepth );
+      return ScalarValue ( oItem.r_data() );
+    }
+
+    //  The structured form. Built entry by entry rather than through a shared
+    //  array writer because the keys come from three different places and only
+    //  the punctuation is common.
+    CString strOut = _T("array(");
+    bool    bFirst = true;
+
+    if ( bList || bVect )
+    {
+      strOut += Pad ( nDepth + 1, bFirst );
+      strOut += _T("'") + Escape ( MSGPRINT_KEY_ITEMS ) + _T("' => ");
+      strOut += bList ? ListValue ( dynamic_cast<P3PmsgList&>(oItem), nDepth + 1 )
+                      : VectValue ( dynamic_cast<P3PmsgVect&>(oItem), nDepth + 1 );
+    }
+    else
+    {
+      CString strScalar;
+      if ( RenderScalar ( oItem.r_data(), strScalar ) != Value_Null )
+      {
+        strOut += Pad ( nDepth + 1, bFirst );
+        strOut += _T("'") + Escape ( MSGPRINT_KEY_VALUE ) + _T("' => ");
+        strOut += ScalarValue ( oItem.r_data() );
+      }
+    }
+
+    if ( bAttr )
+    {
+      P3PmsgCurs& oCurs = oItem.r_Attr().r_Curs ( );
+      for ( int i = 0; oCurs.Goto ( i ); i++ )
+      {
+        P3PmsgItem& oAttrItem = oCurs.r_item ( );
+        CString     strKey;
+        strKey += MSGPRINT_KEY_ATTR;
+        strKey += oAttrItem.c_name ( );
+        strOut += Pad ( nDepth + 1, bFirst );
+        strOut += _T("'") + Escape ( (LPCTSTR)strKey ) + _T("' => ");
+        strOut += NodeValue ( oAttrItem, nDepth + 1 );
+      }
+    }
+
+    if ( bDesc )
+    {
+      P3PmsgCurs& oCurs = oItem.r_Desc().r_Curs ( );
+      for ( int i = 0; oCurs.Goto ( i ); i++ )
+      {
+        P3PmsgItem& oChild = oCurs.r_item ( );
+        strOut += Pad ( nDepth + 1, bFirst );
+        strOut += _T("'") + Escape ( oChild.c_name() ) + _T("' => ");
+        strOut += NodeValue ( oChild, nDepth + 1 );
+      }
+    }
+
+    if ( !bFirst && m_nIndent > 0 )
+      strOut += _T("\n") + Pad ( nDepth );
+    strOut += _T(")");
+    return strOut;
+}
+
+CString
+PrintPHP::ScalarValue ( P3PmsgData& oData ) const
+{
+    CString strValue;
+    switch ( RenderScalar ( oData, strValue ) )
+    {
+      case Value_Bool:
+      case Value_Number:
+        return strValue;
+      case Value_String:
+        return _T("\"") + Escape ( (LPCTSTR)strValue ) + _T("\"");
+      case Value_Null:
+      default:
+        return _T("null");
+    }
+}
+
+CString
+PrintPHP::ListValue ( P3PmsgList& oList, int nDepth ) const
+{
+    CString strOut = _T("array(");
+    bool    bFirst = true;
+    VBLaddr aEntry = oList.GetHeadPos ( );
+    while ( aEntry )
+    {
+      P3PmsgData& oEntry = oList.GetNext ( aEntry );
+      strOut += Pad ( nDepth + 1, bFirst );
+      strOut += ScalarValue ( oEntry );
+    }
+    if ( !bFirst && m_nIndent > 0 )
+      strOut += _T("\n") + Pad ( nDepth );
+    strOut += _T(")");
+    return strOut;
+}
+
+//
+//  NOTES: r_item(i) walks the vector's cursor and invalidates the reference the
+//         previous call returned, so nothing here holds one across an
+//         iteration.
+//
+CString
+PrintPHP::VectValue ( P3PmsgVect& oVect, int nDepth ) const
+{
+    CString       strOut = _T("array(");
+    bool          bFirst = true;
+    const VBLelem nCount = oVect.GetCount ( );
+    for ( VBLelem i = 0; i < nCount; i++ )
+    {
+      strOut += Pad ( nDepth + 1, bFirst );
+      try
+      {
+        strOut += NodeValue ( oVect.r_item ( (int)i ), nDepth + 1 );
+      }
+      //  One element the vector cannot instantiate is one element, not one
+      //  document - the same call RenderScalar makes for a cell that disagrees
+      //  with its own type byte.
+      catch_pP2Pevent_Cancel
+      catch_ALL_Cancel
+    }
+    if ( !bFirst && m_nIndent > 0 )
+      strOut += _T("\n") + Pad ( nDepth );
+    strOut += _T(")");
+    return strOut;
+}
+
+CString
+PrintPHP::AttrValue ( P3PmsgAttr& oAttr, int nDepth ) const
+{
+    CString     strOut = _T("array(");
+    bool        bFirst = true;
+    P3PmsgCurs& oCurs  = oAttr.r_Curs ( );
+    for ( int i = 0; oCurs.Goto ( i ); i++ )
+    {
+      P3PmsgItem& oItem = oCurs.r_item ( );
+      strOut += Pad ( nDepth + 1, bFirst );
+      strOut += _T("'") + Escape ( oItem.c_name() ) + _T("' => ");
+      strOut += NodeValue ( oItem, nDepth + 1 );
+    }
+    if ( !bFirst && m_nIndent > 0 )
+      strOut += _T("\n") + Pad ( nDepth );
+    strOut += _T(")");
+    return strOut;
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Layout
+
+CString
+PrintPHP::Pad ( int nDepth ) const
+{
+    CString strPad;
+    for ( int i = 0; i < nDepth * m_nIndent; i++ )
+      strPad += _T(' ');
+    return strPad;
+}
+
+//
+//  The separator in front of an array entry, which is where the comma lives:
+//  nothing before the first, a comma before the rest, and a line break plus
+//  padding when the indent asks for one.
+//
+CString
+PrintPHP::Pad ( int nDepth, bool& bFirst ) const
+{
+    CString strOut;
+    if ( !bFirst )
+      strOut += _T(",");
+    if ( m_nIndent > 0 )
+      strOut += _T("\n") + Pad ( nDepth );
+    else if ( !bFirst )
+      strOut += _T(" ");
+    bFirst = false;
+    return strOut;
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Identifier hygiene
+
+//
+//  Reduces a Msgcore item name to a PHP identifier.
+//  NOTES: Everything outside [A-Za-z0-9_] becomes an underscore, including
+//         non-ASCII letters - which PHP would actually accept in a UTF-8 file,
+//         but which make an identifier whose spelling depends on the encoding
+//         of the file it lands in. A leading digit takes an underscore prefix.
+//       : THE ORIGINAL NAME IS NOT LOST. Every property this feeds carries it
+//         in the docblock above it, which is the only place it survives once
+//         the identifier has been folded.
+//
+CString
+PrintPHP::Sanitise ( LPCTSTR lpszName, LPCTSTR lpszFallback )
+{
+    CString strOut;
+    if ( lpszName )
+    {
+      for ( const TCHAR *p = lpszName; *p; ++p )
+      {
+        const unsigned int uCode = (unsigned int)*p;
+        if ( ( uCode >= (unsigned int)_T('A') && uCode <= (unsigned int)_T('Z') ) ||
+             ( uCode >= (unsigned int)_T('a') && uCode <= (unsigned int)_T('z') ) ||
+             ( uCode >= (unsigned int)_T('0') && uCode <= (unsigned int)_T('9') ) ||
+               uCode == (unsigned int)_T('_')                                        )
+          strOut += *p;
+        else
+          strOut += _T('_');
+      }
+    }
+    if ( strOut.IsEmpty() )
+      strOut = lpszFallback ? lpszFallback : _T("item");
+    const TCHAR chFirst = strOut[0];
+    if ( chFirst >= _T('0') && chFirst <= _T('9') )
+      strOut = _T("_") + strOut;
+    return strOut;
+}
+
+//
+//  Appends the smallest numeric suffix that makes strName absent from oTaken,
+//  and records the result there.
+//  NOTES: The comparison is case-INSENSITIVE, which is stricter than it needs
+//         to be for properties and exactly right for classes: PHP class names
+//         are case-insensitive, so Address and address are one class and the
+//         second declaration is a fatal error. One rule for both is worth more
+//         than the two extra property spellings the strict one gives up.
+//
+CString
+PrintPHP::Unique ( const CString& strName, std::vector<CString>& oTaken )
+{
+    CString strTry = strName;
+    for ( int nSuffix = 2; ; nSuffix++ )
+    {
+      bool bTaken = false;
+      for ( size_t i = 0; i < oTaken.size(); i++ )
+        if ( oTaken[i].CompareNoCase ( (LPCTSTR)strTry ) == 0 )
+        {
+          bTaken = true;
+          break;
+        }
+      if ( !bTaken )
+        break;
+      strTry.Format ( _T("%s_%d"), (LPCTSTR)strName, nSuffix );
+    }
+    oTaken.push_back ( strTry );
+    return strTry;
+}
+
+//
+//  PHP double-quoted string escaping.
+//  NOTES: Double quotes rather than single, because a single-quoted PHP string
+//         has no escape for a control character - it would carry a raw one into
+//         the source file. The cost is that the dollar sign has to be escaped
+//         as well, since a double-quoted string interpolates variables.
+//       : Control characters take a FULL TWO-DIGIT \xNN. PHP reads up to two
+//         hex digits after \x, so a one-digit escape followed by a hex
+//         character would swallow it and produce a different string.
+//
+CString
+PrintPHP::Escape ( LPCTSTR lpszText )
+{
+    CString strOut;
+    if ( lpszText == nullptr )
+      return strOut;
+
+    for ( const TCHAR *p = lpszText; *p; ++p )
+    {
+      switch ( *p )
+      {
+        case _T('\\'): strOut += _T("\\\\"); break;
+        case _T('\"'): strOut += _T("\\\""); break;
+        case _T('$'):  strOut += _T("\\$");  break;
+        case _T('\n'): strOut += _T("\\n");  break;
+        case _T('\r'): strOut += _T("\\r");  break;
+        case _T('\t'): strOut += _T("\\t");  break;
+        default:
+        {
+          const unsigned int uCode = (unsigned int)*p;
+          if ( uCode < 0x20u || uCode == 0x7Fu )
+          {
+            CString strEscape;
+            strEscape.Format ( _T("\\x%02X"), uCode );
+            strOut += strEscape;
+          }
+          else
+            strOut += *p;
+          break;
+        }
+      }
+    }
+    return strOut;
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Rendering operator
+
+PrintPHP&
+operator >> ( P3PmsgItem& oItem, PrintPHP& oPHP )
+{
+    oPHP.Render ( oItem );
+    return oPHP;
+}
