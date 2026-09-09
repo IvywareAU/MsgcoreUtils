@@ -122,6 +122,21 @@ class MsgcoreUtils_EXT PrintPHP : public MsgPrint
       virtual MsgPrint&
         Render ( P3PmsgItem& oItem );
 
+    // Parsing
+    //  NOTES: Reads the PHP this renderer HOLDS into oItem, replacing what
+    //         oItem held. WHAT IT READS IS THIS RENDERER'S OWN OUTPUT - see the
+    //         definition. It is not a PHP parser and does not claim to be one:
+    //         JSON has a grammar anything can write, PHP source does not, so
+    //         the honest scope of this direction is the round trip.
+    //       : It depends on the DOCBLOCKS. The property identifiers are folded
+    //         by Sanitise on the way out, so the item's real name and its
+    //         Msgcore type survive only in the comment above it - which is what
+    //         lets this dialect restore the exact type byte where JSON can only
+    //         infer a width, and what makes a stripped file unreadable.
+    public:
+      virtual MsgPrint&
+        Parse ( P3PmsgItem& oItem );
+
     // Properties
     public:
       //  The name of the root class, and the prefix every nested class name is
@@ -188,6 +203,51 @@ class MsgcoreUtils_EXT PrintPHP : public MsgPrint
       //  that sanitises to a name already taken gets a suffix rather than
       //  silently redeclaring the first. Cleared at the start of each Render.
       std::vector<CString> m_oClassNames;
+
+    // Reading
+    private:
+      //  Where one class declaration is in the held text. Filled by
+      //  ReadClasses at the start of a parse and indexed by the constructor
+      //  resolution, which names a class the reader has already walked past.
+      struct PHPClass
+      {
+        CString strName;
+        int     nBody{0};              // First character after the '{'
+        int     nEnd{0};               // The matching '}'
+      };
+      std::vector<PHPClass> m_oClasses;
+
+      bool
+        ReadClasses ( );
+      bool
+        ReadClass ( size_t nClass, MsgValue& oValue, int nDepth );
+      bool
+        ReadCtor ( int& nPos, int nEnd
+                 , std::vector<CString>& oProp, std::vector<CString>& oClass );
+      bool
+        ReadExpr ( MsgValue& oValue, int& nPos, int nDepth );
+      bool
+        ReadArrayExpr ( MsgValue& oValue, int& nPos, int nDepth );
+      bool
+        ReadPHPString ( CString& strOut, int& nPos );
+      bool
+        ReadIdent ( CString& strOut, int& nPos ) const;
+      bool
+        ReadWord ( LPCTSTR lpszWord, int& nPos ) const;
+      void
+        SkipTrivia ( int& nPos ) const;
+      void
+        SkipTriviaDoc ( int& nPos, CString& strDoc ) const;
+      void
+        SkipString ( int& nPos ) const;
+      int
+        FindClass ( LPCTSTR lpszName ) const;
+
+      //  The two things only a docblock still knows.
+      static bool
+        DocName ( const CString& strDoc, CString& strName );
+      static CString
+        DocType ( const CString& strDoc );
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -196,3 +256,26 @@ class MsgcoreUtils_EXT PrintPHP : public MsgPrint
 //         from it, so one declaration serves the whole object model.
 MsgcoreUtils_EXT PrintPHP&
 operator >> ( P3PmsgItem& oItem, PrintPHP& oPHP );
+
+//  NOTES: The reversed spelling of the same render, as PrintJson has - and it
+//         REPLACES too, so a second << does not add a second set of class
+//         declarations to the first.
+MsgcoreUtils_EXT PrintPHP&
+operator << ( PrintPHP& oPHP, P3PmsgItem& oItem );
+
+///////////////////////////////////////////////////////////////////////
+//  Parsing operators
+//  NOTES: The same pair as PrintJson's, and the arrow points the same way -
+//         at the thing being written:
+//
+//             oMgr >> oPHP;   oPHP << oMgr;    render - store into text
+//             oMgr << oPHP;   oPHP >> oMgr;    parse  - text into store
+//
+//       : All four return the renderer, whichever side it is written on, so
+//         the outcome is reachable from the expression - and a parse has to be
+//         asked: (oMgr << oPHP).GetError().
+MsgcoreUtils_EXT PrintPHP&
+operator << ( P3PmsgItem& oItem, PrintPHP& oPHP );
+
+MsgcoreUtils_EXT PrintPHP&
+operator >> ( PrintPHP& oPHP, P3PmsgItem& oItem );

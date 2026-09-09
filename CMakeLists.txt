@@ -58,6 +58,7 @@ endif()
 
 set(MSGCOREUTILS_SOURCES
     MsgPrint.cpp
+    MsgValue.cpp
     PrintJson.cpp
     PrintPHP.cpp)
 

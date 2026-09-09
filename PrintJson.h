@@ -95,6 +95,16 @@ class MsgcoreUtils_EXT PrintJson : public MsgPrint
       virtual MsgPrint&
         Render ( P3PmsgItem& oItem );
 
+    // Parsing
+    //  NOTES: Reads the JSON this renderer HOLDS into oItem, replacing what
+    //         oItem held. The text comes from a Render, from Load() or from
+    //         SetText(); nothing else puts any there.
+    //       : GetRooted() has to say what the document actually is - see the
+    //         definition, and SetRooted below.
+    public:
+      virtual MsgPrint&
+        Parse ( P3PmsgItem& oItem );
+
     // Properties
     public:
       //  Whether the document is wrapped in an outer object keyed by the root
@@ -105,6 +115,12 @@ class MsgcoreUtils_EXT PrintJson : public MsgPrint
       //
       //  Off is the form to use when the document is about to be assigned to a
       //  named member of something larger, where the name would appear twice.
+      //
+      //  IT MEANS THE SAME THING TO Parse, which believes it rather than
+      //  sniffing the document: a rooted parse consumes the outer object and
+      //  writes what is inside it. Guessing instead would unwrap
+      //  { "Surname": "Mann" } - a legitimate unrooted document that happens to
+      //  have one member - into the string "Mann".
       bool
         SetRooted ( bool bRooted ) noexcept;
       bool
@@ -134,6 +150,28 @@ class MsgcoreUtils_EXT PrintJson : public MsgPrint
       static CString
         Escape ( LPCTSTR lpszText );
 
+    // Reading
+    //  NOTES: A recursive descent over the held text by character offset. Each
+    //         one leaves nPos on the first character it did not consume and
+    //         returns false having called SetError.
+    private:
+      bool
+        ReadValue ( MsgValue& oValue, int& nPos, int nDepth );
+      bool
+        ReadObject ( MsgValue& oValue, int& nPos, int nDepth );
+      bool
+        ReadArray ( MsgValue& oValue, int& nPos, int nDepth );
+      bool
+        ReadString ( CString& strOut, int& nPos );
+      bool
+        ReadNumber ( MsgValue& oValue, int& nPos );
+      bool
+        ReadHex4 ( unsigned int& uCode, int& nPos );
+      bool
+        ReadLiteral ( LPCTSTR lpszWord, int& nPos );
+      void
+        SkipSpace ( int& nPos ) const;
+
     // Attributes
     private:
       bool     m_bRooted{true};
@@ -149,3 +187,35 @@ class MsgcoreUtils_EXT PrintJson : public MsgPrint
 //         expression - _tprintf ( L"%s", (oMgr >> oJson).c_str() ).
 MsgcoreUtils_EXT PrintJson&
 operator >> ( P3PmsgItem& oItem, PrintJson& oJson );
+
+//  NOTES: The same render written the other way round - oJson << oMgr renders
+//         oMgr into oJson, exactly as oMgr >> oJson does. Both spellings say
+//         the store goes INTO the renderer; which one reads better depends on
+//         which side the caller is thinking about, so both are here rather
+//         than one of them being a mistake the compiler happens to reject.
+//       : It REPLACES for the reason the class does, so it does NOT chain the
+//         way a stream's << does: oJson << oItem1 << oItem2 compiles, because
+//         this returns the renderer, and leaves oItem2 alone in it.
+MsgcoreUtils_EXT PrintJson&
+operator << ( PrintJson& oJson, P3PmsgItem& oItem );
+
+///////////////////////////////////////////////////////////////////////
+//  Parsing operators
+//  NOTES: The same two spellings pointing the other way, and the arrow is the
+//         whole of the difference - it points at the thing being written:
+//
+//             oMgr >> oJson;   oJson << oMgr;    render - store into text
+//             oMgr << oJson;   oJson >> oMgr;    parse  - text into store
+//
+//       : ALL FOUR RETURN THE RENDERER, whichever side it is written on, which
+//         is what makes the outcome reachable from the expression -
+//         (oMgr << oJson).GetError(). Returning the store from the two parsing
+//         forms would have hidden the one thing a parse has to be asked.
+//       : Parsing reads the text the renderer HOLDS, so a document from
+//         anywhere but a preceding Render has to be put there first with Load()
+//         or SetText().
+MsgcoreUtils_EXT PrintJson&
+operator << ( P3PmsgItem& oItem, PrintJson& oJson );
+
+MsgcoreUtils_EXT PrintJson&
+operator >> ( PrintJson& oJson, P3PmsgItem& oItem );

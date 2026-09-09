@@ -1,10 +1,11 @@
 # MsgcoreUtils
 
-Renders a [Msgcore](../Msgcore) store as **JSON** or as **PHP class declarations**.
+Renders a [Msgcore](../Msgcore) store as **JSON** or as **PHP class declarations**, and
+reads either one back into a store.
 
 A separate component that sits **on top of** Msgcore and adds nothing to it — nothing in
-that library knows this one exists, because a renderer is a consumer of the store rather
-than part of it. It has its own solution, its own CMake project and its own eight
+that library knows this one exists, because reading a store out and writing one back are
+things done *to* the object model rather than parts of it. It has its own solution, its own CMake project and its own eight
 configurations, and it is not in Msgcore's install/export set.
 
 ## It needs the Msgcore checkout beside it
@@ -66,11 +67,54 @@ oMgr >> oPHP;                           // the store as PHP class declarations
 oPHP.Save ( L"Person.php", false );     // false = no UTF-8 BOM, for a served file
 ```
 
-`operator>>` is declared on `P3PmsgItem`, not on `P2PmsgMgr`. That one declaration is what
-makes the line above work *and* lets any subtree, list or vector be rendered on its own —
-`P2PmsgMgr` derives from `P3PmsgItem`. It **replaces** the renderer's contents rather than
-appending, because neither dialect has a concatenation that stays valid: two JSON documents
-joined end to end are not a JSON document, and two PHP renders declare every class twice.
+And back the other way. The renderer holds the text either way round, so a document from
+anywhere but a preceding render is put there first — `Load` from a file, `SetText` from
+memory:
+
+```cpp
+PrintJson oJson;
+oJson.Load ( L"person.json" );
+
+P2PmsgMgr oMgr ( L"person.p2p" );
+oMgr << oJson;                          // the document, into the store
+if ( *oJson.GetError ( ) )
+  _tprintf ( _T("line %d: %s
+"), oJson.GetErrorLine(), oJson.GetError() );
+```
+
+**The arrow always points at the thing being written**, and that is the whole of the
+notation:
+
+| | store into text | text into store |
+|---|---|---|
+| written from the store | `oMgr >> oJson;` | `oMgr << oJson;` |
+| written from the renderer | `oJson << oMgr;` | `oJson >> oMgr;` |
+
+All four return the **renderer**, whichever side it is written on, so the outcome is
+reachable from the expression: `(oMgr << oJson).GetError()`. A parse has to be asked whether
+it worked, which is why returning the store from the two right-hand forms would have hidden
+the one thing that matters about them.
+
+Either order renders — `oJson << oMgr;` and `oPHP << oMgr;` are the same operation as the
+two lines above, spelled from the renderer's side. Both say the store goes *into* the
+renderer, and which one reads better depends on which side the caller is thinking about, so
+both are declared rather than one of them being a mistake the compiler happens to reject.
+
+Every one of the four is declared on `P3PmsgItem`, not on `P2PmsgMgr`. That is what makes
+the lines above work *and* lets any subtree, list or vector be rendered — or written into
+— on its own: `P2PmsgMgr` derives from `P3PmsgItem`.
+
+**Both directions replace.** A render replaces the renderer's contents, because neither
+dialect has a concatenation that stays valid: two JSON documents joined end to end are not a
+JSON document, and two PHP renders declare every class twice. A parse replaces the target's
+value, attributes and descendants, for the same kind of reason — half a document merged
+into a live node describes a state the store was never in. So `<<` does not chain the way a
+stream's does: `oJson << oItem1 << oItem2` compiles, because it returns the renderer, and
+leaves `oItem2` alone in it.
+
+Nothing is written until the **whole** document has parsed. A parse failure leaves the target
+exactly as it was and says where it stopped, rather than truncating a node and filling it
+with as much as it managed to read.
 
 Both dialects describe the same store the same way. A plain field is a value; a field that
 carries attributes or descendants is a structure whose members are its attributes (under
@@ -91,7 +135,46 @@ and `@` in an item name.
 
 Stacks are the superseded *history* of a field, not part of its value; a document that
 mixed the two would describe several states of the store at once. `P3PmsgItem::Print` does
-print them, because a debug dump is exactly where the history is wanted.
+print them, because a debug dump is exactly where the history is wanted. A parse drops them
+along with everything else it replaces, for the same reason: a node cannot keep a past that
+never led to its present.
+
+## What a round trip keeps, and what it cannot
+
+A store rendered and read straight back is the same store *structurally* — names, nesting,
+attributes, order. What it is not is type-for-type identical, and the two dialects differ in
+how close they get, because one of them writes the type down and the other has nowhere to.
+
+| | JSON | PHP |
+|---|---|---|
+| names, nesting, attributes, order | kept | kept |
+| **numeric type** | `int32` comes back **`int64`**, `float` comes back `double` — JSON has one number type | kept exactly: the docblock carries the Msgcore type name |
+| **list vs vector** | a vector of nothing but scalars comes back a **list** — both render as an array | kept for a node's own elements, which the docblock names |
+| time, GUID, blob | come back as the **string** they were rendered as | decoded back to the stored type |
+| stacks | not rendered, so not restored | not rendered, so not restored |
+
+Nothing is ever guessed from the *shape* of a string. A string that looks like an ISO-8601
+timestamp stays a string, because a store may legitimately hold one as text and a reader that
+promoted it would corrupt the cell it was meant to restore. Where a type is known it is
+because the document said so, not because the text resembled something.
+
+That is also why the PHP direction leans on the generated comments, and why the file says do
+not edit. `Sanitise` folds a Msgcore item name into a PHP identifier — spaces to
+underscores, duplicates suffixed — so the only surviving record of the real name is the
+`(Msgcore 'Name')` above the property. Strip the docblocks and the names and the types are
+gone. Reading PHP is reading **this renderer's own output**: JSON has a grammar anything can
+write, PHP source does not, so the honest scope of that direction is the round trip.
+
+Two more things worth knowing before pointing a parse at something:
+
+- **`SetRooted` means the same thing to both directions.** A rooted parse consumes the outer
+  object and writes what is inside it, and it believes the flag rather than sniffing the
+  document — guessing would unwrap `{ "Surname": "Mann" }`, a legitimate unrooted document
+  that happens to have one member, into the string `"Mann"`.
+- **The target's own kind is not changed.** A `P3PmsgItem` cannot become a list in place, so a
+  document whose root is an array needs a target that is already a list or a vector, and says
+  so rather than dropping the elements. Every node *below* the root is created by the parse
+  and takes whatever kind the document asks for.
 
 ## Linkage
 

@@ -404,6 +404,7 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MsgPrint.cpp" />
+    <ClCompile Include="MsgValue.cpp" />
     <ClCompile Include="PrintJson.cpp" />
     <ClCompile Include="PrintPHP.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -413,6 +414,7 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
   <ItemGroup>
     <ClInclude Include="MsgcoreUtils.h" />
     <ClInclude Include="MsgPrint.h" />
+    <ClInclude Include="MsgValue.h" />
     <ClInclude Include="PrintJson.h" />
     <ClInclude Include="PrintPHP.h" />
     <ClInclude Include="stdafx.h" />
