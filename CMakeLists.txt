@@ -30,11 +30,11 @@
 # FATAL_ERROR naming the directory rather than a wall of missing-header errors forty
 # lines into the first TU.
 #
-# On Windows MsgcoreUtils(2022).vcxproj remains authoritative, exactly as
-# Msgcore(2022).vcxproj does for the library beside it: it is the build that carries all
+# On Windows MsgcoreUtils(2026).vcxproj remains authoritative, exactly as
+# Msgcore(2026).vcxproj does for the library beside it: it is the build that carries all
 # eight configurations. This file is the Linux port and the parity check.
 #
-# THE TU LIST IS THE COMPILED SET IN MsgcoreUtils(2022).vcxproj, minus stdafx.cpp -
+# THE TU LIST IS THE COMPILED SET IN MsgcoreUtils(2026).vcxproj, minus stdafx.cpp -
 # target_precompile_headers re-creates the PCH on both platforms, so the classic /Yc TU
 # is CMake's to generate.
 

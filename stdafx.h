@@ -13,7 +13,7 @@
 //  reaches the copy in the Msgcore checkout BESIDE this one, and its own
 //  "Platform/platform.h" then resolves relative to THAT root - which is where
 //  Platform/ is. No project-level include directory is needed for either,
-//  exactly as in Msgcore(2022).vcxproj.
+//  exactly as in Msgcore(2026).vcxproj.
 //
 #pragma once
 

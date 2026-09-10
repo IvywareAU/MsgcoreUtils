@@ -33,13 +33,13 @@ the sibling is missing: MSBuild fails in `MsgcoreUtilsRequireSiblingMsgcore`, CM
 
 ## Building
 
-Windows — `MsgcoreUtils(2022).vcxproj` is authoritative and carries all eight
+Windows — `MsgcoreUtils(2026).vcxproj` is authoritative and carries all eight
 configurations. The solution includes Msgcore's project as well, so build order resolves
 and the pair opens together:
 
 ```powershell
-& $msbuild "MsgcoreUtils(2022).sln" /p:Configuration=Debug /p:Platform=x64
-& $msbuild "MsgcoreUtils(2022).vcxproj" /p:Configuration=Debug /p:Platform=x64
+& $msbuild "MsgcoreUtils(2026).sln" /p:Configuration=Debug /p:Platform=x64
+& $msbuild "MsgcoreUtils(2026).vcxproj" /p:Configuration=Debug /p:Platform=x64
 ```
 
 The solution's platform is `x86` where the project's is `Win32` — the same naming
