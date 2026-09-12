@@ -107,6 +107,27 @@ class MsgcoreUtils_EXT PrintPHP : public MsgPrint
     public:
         PrintPHP ( ) noexcept;
 
+        //  Seeds the renderer with a DOCUMENT, exactly as SetText does, so a
+        //  parse needs no second statement:
+        //
+        //      PrintPHP oPHP ( strGeneratedSource );
+        //      oMgr << oPHP;
+        //
+        //  TEXT, NOT A FILENAME, and explicit for that reason. Load() takes the
+        //  filename, and both take an LPCTSTR, so an implicit conversion here
+        //  would silently accept a path where a document belongs and parse the
+        //  path as PHP source.
+        //
+        //  It carries the same indent default the default constructor sets, and
+        //  has to: the base initialiser is 2 and PHP is written at 4, so a
+        //  renderer built from a document and then RENDERED would otherwise
+        //  emit at a width no other PrintPHP produces.
+        //
+        //  Not noexcept, unlike the default constructor: holding the text is an
+        //  allocation.
+      explicit
+        PrintPHP ( LPCTSTR lpszText );
+
         PrintPHP ( const PrintPHP& rhs );
 
       virtual

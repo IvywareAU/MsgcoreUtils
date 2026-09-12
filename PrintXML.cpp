@@ -152,6 +152,14 @@ PrintXML::PrintXML ( ) noexcept
 {
 }
 
+PrintXML::PrintXML ( LPCTSTR lpszText )
+{
+    //  SetText, not an assignment to m_strText: it is the one place the held
+    //  text and the error state are kept in step, and a renderer built from a
+    //  document has to start with no error exactly as SetText leaves one.
+    SetText ( lpszText );
+}
+
 PrintXML::PrintXML ( const PrintXML& rhs )
         : MsgPrint ( rhs )
 {

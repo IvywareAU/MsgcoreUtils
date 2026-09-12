@@ -108,6 +108,23 @@ class MsgcoreUtils_EXT PrintXML : public MsgPrint
     public:
         PrintXML ( ) noexcept;
 
+        //  Seeds the renderer with a DOCUMENT, exactly as SetText does, so a
+        //  parse needs no second statement:
+        //
+        //      PrintXML oXML ( LR"(<Settings><window>...</window></Settings>)" );
+        //      oMgr << oXML;
+        //
+        //  TEXT, NOT A FILENAME, and explicit for that reason. Load() takes the
+        //  filename, and both take an LPCTSTR, so an implicit conversion here
+        //  would silently accept a path where a document belongs and parse the
+        //  path as XML. Direct initialisation, which is what the spelling above
+        //  is, costs nothing for it.
+        //
+        //  Not noexcept, unlike the default constructor: holding the text is an
+        //  allocation.
+      explicit
+        PrintXML ( LPCTSTR lpszText );
+
         PrintXML ( const PrintXML& rhs );
 
       virtual

@@ -84,6 +84,20 @@ PrintPHP::PrintPHP ( ) noexcept
     m_nIndent = PRINTPHP_INDENT_DEFAULT;
 }
 
+PrintPHP::PrintPHP ( LPCTSTR lpszText )
+{
+    //  The indent first, and for the same reason the default constructor sets
+    //  it: MsgPrint initialises m_nIndent to 2 and PHP is written at 4. A
+    //  renderer seeded with a document is usually about to be parsed, but
+    //  nothing stops it being rendered into afterwards, and it would then
+    //  disagree with every other PrintPHP in the process.
+    m_nIndent = PRINTPHP_INDENT_DEFAULT;
+    //  SetText, not an assignment to m_strText: it is the one place the held
+    //  text and the error state are kept in step, and a renderer built from a
+    //  document has to start with no error exactly as SetText leaves one.
+    SetText ( lpszText );
+}
+
 PrintPHP::PrintPHP ( const PrintPHP& rhs )
        : MsgPrint ( rhs )
 {
