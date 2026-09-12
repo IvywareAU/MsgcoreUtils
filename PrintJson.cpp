@@ -30,6 +30,14 @@ PrintJson::PrintJson ( ) noexcept
 {
 }
 
+PrintJson::PrintJson ( LPCTSTR lpszText )
+{
+    //  SetText, not an assignment to m_strText: it is the one place the held
+    //  text and the error state are kept in step, and a renderer built from a
+    //  document has to start with no error exactly as SetText leaves one.
+    SetText ( lpszText );
+}
+
 PrintJson::PrintJson ( const PrintJson& rhs )
         : MsgPrint ( rhs )
 {

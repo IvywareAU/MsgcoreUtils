@@ -80,6 +80,24 @@ class MsgcoreUtils_EXT PrintJson : public MsgPrint
     public:
         PrintJson ( ) noexcept;
 
+        //  Seeds the renderer with a DOCUMENT, exactly as SetText does, so a
+        //  parse needs no second statement:
+        //
+        //      PrintJson oJson ( LR"({ "Settings": { "x": 1240 } })" );
+        //      oMgr << oJson;
+        //
+        //  TEXT, NOT A FILENAME, and explicit for that reason. Load() takes the
+        //  filename, and both take an LPCTSTR, so an implicit conversion here
+        //  would silently accept a path where a document belongs and parse the
+        //  path as JSON. Explicit costs the spelling above nothing - direct
+        //  initialisation is what the caller writes anyway - and it closes the
+        //  one confusion the two signatures can create between them.
+        //
+        //  Not noexcept, unlike the default constructor: holding the text is an
+        //  allocation.
+      explicit
+        PrintJson ( LPCTSTR lpszText );
+
         PrintJson ( const PrintJson& rhs );
 
       virtual
