@@ -1,0 +1,65 @@
+MsgcoreUtils
+Copyright 2000-2026 Ivyware Pty Ltd, Khrustal & Mann
+             MELBOURNE, VICTORIA, AUSTRALIA, 3000
+
+This product includes software developed by Ivyware Pty Ltd and by
+Khrustal & Mann.
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file in
+this directory, or http://www.apache.org/licenses/LICENSE-2.0
+
+
+-------------------------------------------------------------------------
+Files NOT covered by the Apache License, Version 2.0
+-------------------------------------------------------------------------
+
+The following files are Microsoft Corporation project-template, wizard-
+generated, or sample-derived files. They remain subject to Microsoft's own
+terms and carry their own notices, which must not be removed:
+
+    stdafx.h                           Visual Studio project template.
+    stdafx.cpp                         Visual Studio project template.
+    MsgcoreUtils(2022).sln             Visual Studio solution file.
+    MsgcoreUtils(2022).vcxproj         Visual Studio project files.
+    MsgcoreUtils(2022).vcxproj.filters
+    MsgcoreUtils(2026).sln             Visual Studio solution file.
+    MsgcoreUtils(2026).vcxproj         Visual Studio project files.
+    MsgcoreUtils(2026).vcxproj.filters
+
+MsgcoreUtils.rc is a mixed file, in the same way Msgcore.rc is. Its wizard-
+generated skeleton is Microsoft's, as above; the FileDescription string and
+the VERSIONINFO values it reads from Msgcore's Msgcore_version.h are the
+work of Khrustal & Mann and ARE covered by the Apache License, Version 2.0.
+
+MsgcoreUtils(2022/2026).vcxproj.user are per-user IDE settings, excluded by
+.gitignore and never tracked, so they need no exception here.
+
+
+-------------------------------------------------------------------------
+Third-party components required at build or run time
+-------------------------------------------------------------------------
+
+This software is built against, and links to, components that are licensed
+separately and are NOT distributed under the Apache License, Version 2.0:
+
+    Microsoft Foundation Classes (MFC)  - Microsoft, licensed separately.
+                                          Built as an MFC extension DLL
+                                          against the shared MFC runtime.
+    Microsoft Visual C++ runtime        - Microsoft, licensed separately.
+                                          (mfc140u, msvcp140, vcruntime140,
+                                          ucrtbase)
+    Windows SDK                         - Microsoft, part of the operating
+                                          system.
+
+These are dependencies, not bundled code. No source from any of them is
+included in this repository.
+
+
+-------------------------------------------------------------------------
+Msgcore
+-------------------------------------------------------------------------
+
+This project builds against, and links to, Msgcore (see the sibling
+Msgcore checkout this project requires), which is Apache License, Version
+2.0 licensed software from the same copyright holders. Msgcore is not
+bundled here; it is a separate repository this one is built beside.
