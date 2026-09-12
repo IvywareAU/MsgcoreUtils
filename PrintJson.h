@@ -115,8 +115,9 @@ class MsgcoreUtils_EXT PrintJson : public MsgPrint
 
     // Parsing
     //  NOTES: Reads the JSON this renderer HOLDS into oItem, replacing what
-    //         oItem held. The text comes from a Render, from Load() or from
-    //         SetText(); nothing else puts any there.
+    //         oItem held. The text comes from a Render, from the constructor
+    //         above, from Load() or from SetText(); nothing else puts any
+    //         there.
     //       : GetRooted() has to say what the document actually is - see the
     //         definition, and SetRooted below.
     public:

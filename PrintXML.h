@@ -142,8 +142,9 @@ class MsgcoreUtils_EXT PrintXML : public MsgPrint
 
     // Parsing
     //  NOTES: Reads the XML this renderer HOLDS into oItem, replacing what
-    //         oItem held. The text comes from a Render, from Load() or from
-    //         SetText(); nothing else puts any there.
+    //         oItem held. The text comes from a Render, from the constructor
+    //         above, from Load() or from SetText(); nothing else puts any
+    //         there.
     //       : There is no counterpart to PrintJson's SetRooted, because XML has
     //         no unrooted form: a document is exactly one element, that element
     //         names the node, and the name is discarded on the way in for the

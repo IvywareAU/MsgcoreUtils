@@ -140,8 +140,9 @@ class MsgcoreUtils_EXT MsgPrint
     //         Render in both senses - it replaces, and it takes any P3PmsgItem
     //         rather than only a manager.
     //       : The text is whatever the object holds, so a document that came
-    //         from somewhere else has to be put there first - with Load() from
-    //         a file, or SetText() from memory. Parsing straight after a Render
+    //         from somewhere else has to be put there first - by the LPCTSTR
+    //         constructor each parsing dialect carries, with Load() from a
+    //         file, or SetText() from memory. Parsing straight after a Render
     //         is a round trip and nothing more.
     //       : NOTHING IS WRITTEN UNTIL THE WHOLE DOCUMENT HAS PARSED. A parse
     //         failure leaves oItem exactly as it was, because the alternative -

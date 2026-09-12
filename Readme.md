@@ -87,11 +87,12 @@ oHTML.Save ( L"person.html" );
 Those renders are spelled opposite ways round on purpose: `oMgr >> oPHP;` and
 `oPHP << oMgr;` are one operation, and the pair below is the same choice on the parse side.
 The renderer holds the text either way round, so a document from anywhere but a preceding
-render is put there first — `Load` from a file, `SetText` from memory:
+render is put there first. There are three doors: the **constructor** takes the document
+itself, `Load` reads it out of a file, and `SetText` replaces it on a renderer already in
+hand.
 
 ```cpp
-PrintJson oJson;
-oJson.Load ( L"person.json" );
+PrintJson oJson ( LR"({ "Surname": "Mann", "Age": 42 })" );   // straight from a literal
 
 P2PmsgMgr oMgr ( L"person.p2p" );
 oMgr << oJson;                          // the document, into the store
@@ -100,11 +101,21 @@ if ( *oJson.GetError ( ) )
 
 P2PmsgMgr oOther ( L"other.p2p" );
 PrintXML  oXML;
-oXML.SetText ( strXML );                // already in memory, so no Load
+oXML.Load ( L"person.xml" );            // or out of a file
 oXML >> oOther;                         // mirror of oOther << oXML;
 if ( *oXML.GetError ( ) )
   _tprintf ( _T("line %d: %s\n"), oXML.GetErrorLine ( ), oXML.GetError ( ) );
+
+PrintPHP oPHP;
+oPHP.SetText ( strPHP );                // or onto one you are already holding
 ```
+
+Those constructors take a **document, not a filename**, and are `explicit` for exactly that
+reason: `Load` takes the filename, both take an `LPCTSTR`, and an implicit conversion would
+have let a path be passed where a document belongs and then parsed the path itself. Direct
+initialisation is what a caller writes anyway, so the keyword costs the spelling above
+nothing. `PrintHTML` has no such constructor, for the same reason it has no parse — there
+would be nothing to seed it *for*.
 
 **The arrow always points at the thing being written**, and that is the whole of the
 notation:
