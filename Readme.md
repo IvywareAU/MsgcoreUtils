@@ -181,6 +181,35 @@ and `@` in an item name.
 | NaN / ±Inf / `Msgcore_NULL_DBLE` | `null` — JSON has no literal for them | flagged `p2p:null` | `null` | the word `null`, in its own colour |
 | stacks (`^`) | not rendered | not rendered | not rendered | not rendered |
 
+`SetPlainObjects(true)` gives PHP a second shape: `stdClass` and a run of assignments
+instead of class declarations.
+
+```php
+$Settings = new stdClass();
+$Settings->window = new stdClass();
+$Settings->window->_value = "";
+$Settings->window->x = 1240;
+$Settings->window->y = 820;
+```
+
+Shorter, and free of both constraints the declaration form is shaped by — nothing has to be
+declared before it is used, and no initialiser has to be a constant expression, because
+there are no initialisers. The array literals are the same ones: a list, a vector and an
+attribute set are spelled identically in either form, and the three synthetic members keep
+their names.
+
+**It is one-way, and that is the whole of the trade.** An assignment to a dynamic property
+has no docblock over it, so neither the Msgcore type nor the item's unfolded name is in the
+document — which is exactly what the parse reads. Point a parse at one and it says `No
+class declaration in the document`. The file says so in its own banner rather than leaving
+a reader to find out. The one loss it can still report, it does: a name that had to be
+folded is noted on the line that folded it.
+
+The flag is not consulted by `Parse`. It says what a *render* emits, and gating the parse on
+it would refuse a perfectly good class-form document that happened to be loaded into a
+renderer configured for plain output. This is the same kind of switch as `SetTypes(false)`
+on XML — a deliberate move into a cheaper column, offered rather than assumed.
+
 XML is the one dialect whose *own* attributes go unused, and that is the interesting
 decision in it. A Msgcore attribute is a `P3PmsgItem` — it has a name, a value, a type, and
 attributes and descendants of its own; an XML attribute holds a string. Mapping one onto

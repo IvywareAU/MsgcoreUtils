@@ -174,6 +174,34 @@ class MsgcoreUtils_EXT PrintPHP : public MsgPrint
         SetPreamble ( bool bPreamble ) noexcept;
       bool
         GetPreamble ( ) const noexcept;
+      //  PLAIN OBJECTS. Off by default. On, the render emits stdClass and a
+      //  run of assignments instead of class declarations:
+      //
+      //      $Settings = new stdClass();
+      //      $Settings->window = new stdClass();
+      //      $Settings->window->x = 1240;
+      //
+      //  Shorter, and free of the two constraints the declaration form is
+      //  shaped by - nothing has to be declared before it is used, and no
+      //  initialiser has to be a constant expression, because there are no
+      //  initialisers. A consumer that only wants to include the file and read
+      //  values wants this one.
+      //
+      //  IT IS ONE-WAY, and that is the whole of the trade. An assignment to a
+      //  dynamic property has no docblock over it, so the Msgcore type and the
+      //  item's unfolded name are not in the document - Parse reads neither out
+      //  of this form, and reports "No class declaration in the document" if it
+      //  is pointed at one. The only loss this form does report is a folded
+      //  name, noted on the line that folded it.
+      //
+      //  The flag is not consulted by Parse. It says what a RENDER emits, and
+      //  gating the parse on it would refuse a perfectly good class-form
+      //  document that happened to be loaded into a renderer configured for
+      //  plain output.
+      bool
+        SetPlainObjects ( bool bPlain ) noexcept;
+      bool
+        GetPlainObjects ( ) const noexcept;
 
     // Implementation
     private:
@@ -181,6 +209,14 @@ class MsgcoreUtils_EXT PrintPHP : public MsgPrint
       //  itself. strClass is already sanitised and already unique.
       void
         RenderClass ( P3PmsgItem& oItem, const CString& strClass, int nDepth );
+
+      //  The plain-object form of the same walk. strVar is the whole left-hand
+      //  side this node is reached by ("$Settings->window"), already folded and
+      //  already unique within its parent. lpszNote is the item's real name and
+      //  is emitted as a trailing comment, or null when folding lost nothing.
+      void
+        RenderPlain ( P3PmsgItem& oItem, const CString& strVar,
+                      LPCTSTR lpszNote, int nDepth );
 
       //  A node rendered as a PHP VALUE expression: scalar, array, or the
       //  associative array form when it carries attributes as well.
@@ -220,6 +256,7 @@ class MsgcoreUtils_EXT PrintPHP : public MsgPrint
     private:
       CString  m_strClassName;
       bool     m_bPreamble{true};
+      bool     m_bPlainObjects{false};
       //  Every class name emitted by the render in progress, so a second node
       //  that sanitises to a name already taken gets a suffix rather than
       //  silently redeclaring the first. Cleared at the start of each Render.
