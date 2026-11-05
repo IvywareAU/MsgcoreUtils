@@ -19,9 +19,6 @@ terms and carry their own notices, which must not be removed:
 
     stdafx.h                           Visual Studio project template.
     stdafx.cpp                         Visual Studio project template.
-    MsgcoreUtils(2022).sln             Visual Studio solution file.
-    MsgcoreUtils(2022).vcxproj         Visual Studio project files.
-    MsgcoreUtils(2022).vcxproj.filters
     MsgcoreUtils(2026).sln             Visual Studio solution file.
     MsgcoreUtils(2026).vcxproj         Visual Studio project files.
     MsgcoreUtils(2026).vcxproj.filters
