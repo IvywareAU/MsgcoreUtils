@@ -219,9 +219,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <SDLCheck>false</SDLCheck>
-      <!-- /sdl off in Release (its runtime checks cost ~4%: p2p_performance F-P4-8); the warnings it makes errors stay errors -->
-      <TreatSpecificWarningsAsErrors>4146;4308;4532;4533;4700;4703;4789;4995;4996;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
+      <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -255,9 +253,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <SDLCheck>false</SDLCheck>
-      <!-- /sdl off in Release (its runtime checks cost ~4%: p2p_performance F-P4-8); the warnings it makes errors stay errors -->
-      <TreatSpecificWarningsAsErrors>4146;4308;4532;4533;4700;4703;4789;4995;4996;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
+      <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -351,9 +347,7 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <SDLCheck>false</SDLCheck>
-      <!-- /sdl off in Release (its runtime checks cost ~4%: p2p_performance F-P4-8); the warnings it makes errors stay errors -->
-      <TreatSpecificWarningsAsErrors>4146;4308;4532;4533;4700;4703;4789;4995;4996;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
+      <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -379,9 +373,7 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <SDLCheck>false</SDLCheck>
-      <!-- /sdl off in Release (its runtime checks cost ~4%: p2p_performance F-P4-8); the warnings it makes errors stay errors -->
-      <TreatSpecificWarningsAsErrors>4146;4308;4532;4533;4700;4703;4789;4995;4996;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
+      <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
