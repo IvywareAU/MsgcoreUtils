@@ -209,7 +209,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <OmitFramePointers>true</OmitFramePointers>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_AFXEXT;MsgcoreUtils_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -219,7 +219,9 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
+      <!-- /sdl off in Release (its runtime checks cost ~4%: p2p_performance F-P4-8); the warnings it makes errors stay errors -->
+      <TreatSpecificWarningsAsErrors>4146;4308;4532;4533;4700;4703;4789;4995;4996;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -243,7 +245,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <OmitFramePointers>true</OmitFramePointers>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_AFXEXT;MsgcoreUtils_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -253,7 +255,9 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
+      <!-- /sdl off in Release (its runtime checks cost ~4%: p2p_performance F-P4-8); the warnings it makes errors stay errors -->
+      <TreatSpecificWarningsAsErrors>4146;4308;4532;4533;4700;4703;4789;4995;4996;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -337,7 +341,7 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <OmitFramePointers>true</OmitFramePointers>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;Msgcore_STATIC;MsgcoreUtils_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -347,7 +351,9 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
+      <!-- /sdl off in Release (its runtime checks cost ~4%: p2p_performance F-P4-8); the warnings it makes errors stay errors -->
+      <TreatSpecificWarningsAsErrors>4146;4308;4532;4533;4700;4703;4789;4995;4996;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -363,7 +369,7 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <OmitFramePointers>true</OmitFramePointers>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;Msgcore_STATIC;MsgcoreUtils_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -373,7 +379,9 @@ copy /Y "$(OutDir)$(TargetName).lib" "$(WDMSCS_LIB)\$(TargetName).lib"</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
+      <!-- /sdl off in Release (its runtime checks cost ~4%: p2p_performance F-P4-8); the warnings it makes errors stay errors -->
+      <TreatSpecificWarningsAsErrors>4146;4308;4532;4533;4700;4703;4789;4995;4996;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
